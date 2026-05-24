@@ -1,0 +1,147 @@
+-- BASICS
+-- 1.Retrive the total number orders placed.
+SELECT COUNT(*) AS TOTAL_ORDERS FROM ORDERS;
+
+-- 2. Calculate the total revenu genrated from pizzas sales.
+SELECT 
+    ROUND(SUM(OD.QUANTITY * P.PRICE), 2) AS TOTAL_REVENUE
+FROM
+    ORDER_DETAILS OD
+        JOIN
+    PIZZAS P ON OD.PIZZA_ID = P.PIZZA_ID;
+    
+-- 3.Identify the highest prised pzza.
+SELECT 
+    P.PRICE, PT.NAME
+FROM
+    PIZZAS P
+        JOIN
+    PIZZA_TYPES PT ON P.PIZZA_TYPE_ID = PT.PIZZA_TYPE_ID
+ORDER BY P.PRICE DESC
+LIMIT 1;
+
+-- 4. Identify the most common size pizzas orderd.
+SELECT 
+    P.SIZE, COUNT(OD.QUANTITY) QTY
+FROM
+    PIZZAS P
+        JOIN
+    ORDER_DETAILS OD ON P.PIZZA_ID = OD.PIZZA_ID
+GROUP BY P.SIZE
+ORDER BY QTY DESC
+LIMIT 1; 
+
+-- 5.List the top 5 most orderd pizza types along with their quantities. 
+SELECT 
+    PT.NAME, SUM(OD.QUANTITY) QTY
+FROM
+    PIZZA_TYPES PT
+        JOIN
+    PIZZAS P ON PT.PIZZA_TYPE_ID = P.PIZZA_TYPE_ID
+        JOIN
+    ORDER_DETAILS OD ON OD.PIZZA_ID = P.PIZZA_ID
+GROUP BY PT.NAME
+ORDER BY QTY DESC
+LIMIT 5;
+
+-- INTERMEDIATE
+-- 6.Join the necessary table to find the total quantity of each pizza category orderd.
+SELECT 
+    SUM(OD.QUANTITY) QTY, PT.CATEGORY
+FROM
+    PIZZA_TYPES PT
+        JOIN
+    PIZZAS P ON PT.PIZZA_TYPE_ID = P.PIZZA_TYPE_ID
+        JOIN
+    ORDER_DETAILS OD ON P.PIZZA_ID = OD.PIZZA_ID
+GROUP BY PT.CATEGORY
+ORDER BY QTY DESC;
+
+-- 7. Deterine the distribution of orders by hour of the day.
+SELECT 
+    SUM(OD.QUANTITY) QTY, HOUR(O.TIME) AS HRS
+FROM
+    ORDER_DETAILS OD
+        JOIN
+    ORDERS O ON OD.ORDER_ID = O.ORDER_ID
+GROUP BY HRS
+ORDER BY HRS;
+
+-- 8. Jon relevent tables to find the category wise distribution of pizzas.
+SELECT SUM(OD.QUANTITY) AS QTY, PT.CATEGORY FROM PIZZA_TYPES PT JOIN PIZZAS P 
+ON P.PIZZA_TYPE_ID = PT.PIZZA_TYPE_ID
+JOIN ORDER_DETAILS OD ON P.PIZZA_ID = OD.PIZZA_ID
+GROUP BY PT.CATEGORY 
+ORDER BY QTY;
+
+-- 9.Group the orders by date and calculate the average number of pizzas orderd per day.
+SELECT ROUND(AVG(QTY),2) AVG_QTY_DAY FROM 
+(
+SELECT DAY(O.DATE) DAY, SUM(OD.QUANTITY) QTY FROM ORDER_DETAILS OD
+JOIN ORDERS O ON OD.ORDER_ID = O.ORDER_ID
+GROUP BY DAY 
+ORDER BY DAY) AS ORDERQTY;
+
+-- 10. Determine the top 3 most order pizza types based on revenue.
+SELECT 
+    PT.NAME AS PNAME, ROUND(SUM(OD.QUANTITY * P.PRICE),2) AS REVENUE
+FROM
+    PIZZA_TYPES PT
+        JOIN
+    PIZZAS P ON PT.PIZZA_TYPE_ID = P.PIZZA_TYPE_ID
+        JOIN
+    ORDER_DETAILS OD ON P.PIZZA_ID = OD.PIZZA_ID
+GROUP BY PNAME
+ORDER BY REVENUE DESC
+LIMIT 3;
+
+-- ADVANCED
+-- 11. Calculate the percentage contribution of each pizza type to total revenue. 
+SELECT 
+    PT.CATEGORY,
+    ROUND(
+        SUM(OD.QUANTITY * P.PRICE) * 100 /
+        (
+            SELECT 
+                SUM(OD2.QUANTITY * P2.PRICE)
+            FROM ORDER_DETAILS OD2
+            JOIN PIZZAS P2 
+                ON OD2.PIZZA_ID = P2.PIZZA_ID
+        ),
+    2) AS REVENUE_PERCENTAGE
+FROM PIZZA_TYPES PT
+JOIN PIZZAS P 
+    ON PT.PIZZA_TYPE_ID = P.PIZZA_TYPE_ID
+JOIN ORDER_DETAILS OD  
+    ON P.PIZZA_ID = OD.PIZZA_ID
+GROUP BY PT.CATEGORY
+ORDER BY REVENUE_PERCENTAGE DESC;
+
+-- 12. Analyze the cumulative reveenue of pizzas over time.
+SELECT ODATE, SUM(REVENUE) OVER(ORDER BY ODATE) AS CUMILATIVE_REVENUE 
+FROM
+(SELECT O.DATE AS ODATE, SUM(OD.QUANTITY * P.PRICE) AS REVENUE
+FROM 
+ORDER_DETAILS OD JOIN PIZZAS P 
+ON OD.PIZZA_ID = P.PIZZA_ID
+JOIN ORDERS O 
+ON O.ORDER_ID = OD.ORDER_ID
+GROUP BY O.DATE) AS SALES;
+
+-- 13. Determine the top 3 most order pizza types based on revenue for each pizza category.
+SELECT NAME, REVENUE FROM 
+(SELECT 
+CATEGORY, NAME, REVENUE, RANK () OVER (PARTITION BY CATEGORY ORDER BY REVENUE DESC) AS RNK 
+FROM 
+(SELECT 
+    PT.CATEGORY,
+    PT.NAME,
+    SUM((OD.QUANTITY) * P.PRICE) AS REVENUE
+FROM
+    PIZZA_TYPES PT
+        JOIN
+    PIZZAS P ON PT.PIZZA_TYPE_ID = P.PIZZA_TYPE_ID
+        JOIN
+    ORDER_DETAILS OD ON OD.PIZZA_ID = P.PIZZA_ID
+GROUP BY PT.CATEGORY , PT.NAME) AS PZTA) AS PZTB
+WHERE RNK <=3;
