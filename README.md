@@ -5,29 +5,29 @@ Analyzed pizza sales data using SQL to identify revenue drivers, customer orderi
 
 Key Business Insights
 
-📈 Revenue Analysis
+Revenue Analysis
 
 Calculated total business revenue generated from pizza sales.
 Identified the highest-priced pizza contributing to premium product sales.
 
-🍕 Product Performance
+Product Performance
 
 Determined the top 5 best-selling pizza varieties based on order quantity.
 Identified the top 3 revenue-generating pizza types.
 Analyzed category-wise sales performance to understand customer preferences.
 
-🛒 Customer Ordering Behavior
+Customer Ordering Behavior
 
 Identified the most frequently ordered pizza size.
 Analyzed order distribution across different hours of the day to determine peak business hours.
 Calculated average pizzas ordered per day to understand demand patterns.
 
-📊 Category Analysis
+Category Analysis
 
 Evaluated quantity sold by pizza category.
 Measured percentage revenue contribution of each category to total sales.
 
-📅 Trend Analysis
+Trend Analysis
 
 Performed cumulative revenue analysis to monitor business growth over time.
 Identified category-wise top-performing pizzas using ranking functions.
